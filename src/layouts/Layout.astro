@@ -1,3 +1,11 @@
+---
+const { title, themeClass } = Astro.props;
+
+interface Props {
+	title: string;
+	themeClass: string; // This will hold our Tailwind color/font classes
+	}
+---
 <!doctype html>
 <html lang="en">
 	<head>
@@ -6,10 +14,23 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
 	</head>
-	<body>
-		<slot />
+
+	<body class={`min-h-screen transition-colors duration-300 ${themeClass}`}>
+		<header class="max-w-4xl mx-auto p-6">
+			<nav>
+				<ul class="flex flex-row gap-6 font-bold uppercase tracking-widest text-sm">
+					<li><a href="/" class="hover:opacity-70 transition-opacity">home</a></li>
+					<li><a href="/projects" class="hover:opacity-70 transition-opacity">projects</a></li>
+					<li><a href="/art" class="hover:opacity-70 transition-opacity">art</a></li>
+					<li><a href="/about" class="hover:opacity-70 transition-opacity">about</a></li>
+				</ul>
+			</nav>
+		</header>
+		<main class="max-w-4xl mx-auto p-6">
+			<slot />
+		</main>
 	</body>
 </html>
 
