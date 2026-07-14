@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 const { title, themeClass } = Astro.props;
 
 interface Props {
@@ -18,13 +19,13 @@ interface Props {
 	</head>
 
 	<body class={`min-h-screen transition-colors duration-300 ${themeClass}`}>
-		<header class="max-w-4xl mx-auto p-6">
-			<nav>
-				<ul class="flex flex-row gap-6 font-bold uppercase tracking-widest text-sm">
-					<li><a href="/" class="hover:opacity-70 transition-opacity">home</a></li>
-					<li><a href="/projects" class="hover:opacity-70 transition-opacity">projects</a></li>
-					<li><a href="/art" class="hover:opacity-70 transition-opacity">art</a></li>
-					<li><a href="/about" class="hover:opacity-70 transition-opacity">about</a></li>
+		<header class="w-full py-8 border-b border-gray-200/20">
+			<nav class="max-w-4xl mx-auto flex justify-center">
+				<ul class="flex flex-row gap-8 font-medium tracking-widest text-sm uppercase">
+					<li><a href="/" class="hover:text-gray-400 transition-colors">home</a></li>
+					<li><a href="/projects" class="hover:text-gray-400 transition-colors">projects</a></li>
+					<li><a href="/art" class="hover:text-gray-400 transition-colors">art</a></li>
+					<li><a href="/about" class="hover:text-gray-400 transition-colors">about</a></li>
 				</ul>
 			</nav>
 		</header>
