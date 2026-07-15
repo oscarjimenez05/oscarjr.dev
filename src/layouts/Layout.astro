@@ -29,9 +29,30 @@ interface Props {
 				</ul>
 			</nav>
 		</header>
-		<main class="max-w-4xl mx-auto p-6">
+		<main class="w-full max-w-4xl mx-auto p-6">
 			<slot />
 		</main>
+
+		<footer class="w-full py-6 mt-12 border-t border-zinc-800/50 font-mono text-sm text-zinc-500">
+			<div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+
+				<p>&copy; {new Date().getFullYear()} osquijr.dev. All systems functional.</p>
+
+				<ul class="flex gap-6">
+					<li>
+						<a href="https://github.com/oscarjimenez05" target="_blank" class="hover:text-emerald-400 transition-colors">GitHub</a>
+					</li>
+					<li>
+						<a href="https://www.linkedin.com/in/oscarjimenez05/" target="_blank" class="hover:text-blue-400 transition-colors">LinkedIn</a>
+					</li>
+					<li>
+						<a href="https://letterboxd.com/osquijr" target="_blank" class="hover:text-purple-400 transition-colors">Letterboxd</a>
+					</li>
+				</ul>
+
+			</div>
+		</footer>
+
 	</body>
 </html>
 
