@@ -1,5 +1,4 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
 ---
 
@@ -41,7 +40,7 @@ import Layout from '../layouts/Layout.astro';
 
 				<tr class="hover:bg-zinc-900/50 transition-colors">
 					<td class="py-4 text-blue-400">> knowledge</td>
-					<td class="py-4">Neural Networks, Combinatorics, Calculus, Linear Algebra, Networks, Ethnomathematics</td>
+					<td class="py-4">Large Language Models, Combinatorics, Calculus, Linear Algebra, Networks, Ethnomathematics</td>
 				</tr>
 
 				<tr class="hover:bg-zinc-900/50 transition-colors">
@@ -74,7 +73,7 @@ import Layout from '../layouts/Layout.astro';
 	const container = document.getElementById("typewriter");
 	let lineIndex = 0;
 	let charIndex = 0;
-	let currentSpan = null;
+	let currentSpan: HTMLSpanElement | null = null;
 
 	function typeWriter() {
 		if (lineIndex < codeLines.length) {
