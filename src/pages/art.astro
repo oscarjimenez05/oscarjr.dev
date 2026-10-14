@@ -1,7 +1,5 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Card from "../components/ui/Card.astro";
-import Badge from "../components/ui/Badge.astro";
 ---
 
 <Layout
@@ -9,40 +7,5 @@ import Badge from "../components/ui/Badge.astro";
         themeClass="bg-emerald-950 text-zinc-100 font-serif"
 >
         <h1>Artistic</h1>
-        <section class="max-w-4xl mx-auto py-16 px-4 space-y-6">
-                <h2
-                        class="text-2xl font-semibold tracking-tight text-zinc-100 animate-in fade-in slide-in-from-top-2 duration-500"
-                >
-                        Featured Work
-                </h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card
-                                title="Automated Homelab & NAS"
-                                description="Containerized media stack, automated backup pipelines, and secure reverse-proxy routing."
-                                badge="Self-Hosted"
-                                href="/projects/homelab"
-                                delay="100"
-                        >
-                                <div class="mt-4 flex gap-2">
-                                        <Badge variant="cyan">Docker</Badge>
-                                        <Badge>Tailscale</Badge>
-                                        <Badge>Caddy</Badge>
-                                </div>
-                        </Card>
-
-                        <Card
-                                title="PRNG Statistical Analysis"
-                                description="Empirical randomness evaluation of linear congruential generators and Lehmer codes using TestU01."
-                                badge="Research"
-                                href="/projects/prng"
-                                delay="200"
-                        >
-                                <div class="mt-4 flex gap-2">
-                                        <Badge variant="cyan">C / Cython</Badge>
-                                        <Badge>Statistical Modeling</Badge>
-                                </div>
-                        </Card>
-                </div>
-        </section>
+        
 </Layout>
