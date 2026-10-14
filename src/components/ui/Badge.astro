@@ -1,0 +1,13 @@
+---
+interface Props {
+  variant?: 'cyan' | 'zinc';
+}
+const { variant = 'zinc' } = Astro.props;
+const colorStyles = variant === 'cyan' 
+  ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+  : 'bg-zinc-800/60 text-zinc-300 border-zinc-700/50';
+---
+
+<span class={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono transition-transform hover:scale-105 duration-200 ${colorStyles}`}>
+  <slot />
+</span>
