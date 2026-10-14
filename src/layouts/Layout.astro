@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 const { title, themeClass } = Astro.props;
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<ClientRouter />
 	</head>
 
 	<body class={`min-h-screen transition-colors duration-300 ${themeClass}`}>
