@@ -21,16 +21,12 @@ interface Props {
         <h1 class="text-5xl font-semibold tracking-tight text-zinc-100">
             {title}
         </h1>
-        <article
-            class="prose prose-invert max-w-none font-mono
-      prose-headings:text-zinc-100 prose-headings:font-semibold
-      prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-2 prose-h2:mt-10
-      prose-h3:text-xl prose-h3:text-cyan-400 prose-h3:mt-6
-      prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:my-4
-      prose-a:text-cyan-400 hover:prose-a:text-cyan-300
-      prose-code:text-cyan-300 prose-code:bg-zinc-900/80 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-      prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800"
-        >
+        <article class="prose prose-invert max-w-none font-mono 
+        prose-headings:text-zinc-100 prose-headings:font-semibold 
+        prose-h2:text-2xl prose-h2:border-b prose-h2:border-zinc-800 prose-h2:pb-2 prose-h2:mt-10 
+        prose-h3:text-xl prose-h3:text-cyan-400 prose-h3:mt-6 
+        prose-p:text-zinc-300 prose-p:leading-relaxed prose-p:my-4 
+        prose-a:text-cyan-400 hover:prose-a:text-cyan-300 [&_:not(pre)>code]:text-cyan-300 [&_:not(pre)>code]:bg-zinc-900/80 [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:rounded [&_pre]:relative [&_pre]:pt-8 [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-zinc-800 [&_pre]:bg-zinc-950/90 [&_pre]:shadow-2xl [&_pre>code]:bg-transparent [&_pre>code]:p-0 [&_pre>code]:border-none [&_pre>code]:shadow-none [&_pre[data-language]]:before:content-[attr(data-language)] [&_pre[data-language]]:before:absolute [&_pre[data-language]]:before:top-2 [&_pre[data-language]]:before:right-3 [&_pre[data-language]]:before:text-[10px] [&_pre[data-language]]:before:font-sans [&_pre[data-language]]:before:uppercase [&_pre[data-language]]:before:tracking-wider [&_pre[data-language]]:before:text-zinc-500 [&_pre[data-language]]:before:bg-zinc-900 [&_pre[data-language]]:before:px-2 [&_pre[data-language]]:before:py-0.5 [&_pre[data-language]]:before:rounded [&_pre[data-language]]:before:border [&_pre[data-language]]:before:border-zinc-800/80">
             <slot />
         </article>
     </section>

@@ -1,13 +1,20 @@
 ---
-import '../styles/global.css';
-import { ClientRouter } from 'astro:transitions';
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
 const { title, themeClass } = Astro.props;
 
 interface Props {
 	title: string;
 	themeClass: string; // This will hold our Tailwind color/font classes
-	}
+}
+
+const buildDate = new Date().toLocaleDateString("en-US", {
+	year: "numeric",
+	month: "long",
+	day: "numeric",
+});
 ---
+
 <!doctype html>
 <html lang="en">
 	<head>
@@ -23,11 +30,33 @@ interface Props {
 	<body class={`min-h-screen transition-colors duration-300 ${themeClass}`}>
 		<header class="w-full py-8 border-b border-gray-200/20">
 			<nav class="max-w-4xl mx-auto flex justify-center">
-				<ul class="flex flex-row gap-8 font-medium tracking-widest text-sm uppercase">
-					<li><a href="/" class="hover:text-gray-400 transition-colors">home</a></li>
-					<li><a href="/projects" class="hover:text-gray-400 transition-colors">projects</a></li>
-					<li><a href="/art" class="hover:text-gray-400 transition-colors">art</a></li>
-					<li><a href="/about" class="hover:text-gray-400 transition-colors">about</a></li>
+				<ul
+					class="flex flex-row gap-8 font-medium tracking-widest text-sm uppercase"
+				>
+					<li>
+						<a
+							href="/"
+							class="hover:text-gray-400 transition-colors"
+							>home</a>
+					</li>
+					<li>
+						<a
+							href="/projects"
+							class="hover:text-gray-400 transition-colors"
+							>projects</a>
+					</li>
+					<li>
+						<a
+							href="/art"
+							class="hover:text-gray-400 transition-colors"
+							>art</a>
+					</li>
+					<li>
+						<a
+							href="/about"
+							class="hover:text-gray-400 transition-colors"
+							>about</a>
+					</li>
 				</ul>
 			</nav>
 		</header>
@@ -35,26 +64,44 @@ interface Props {
 			<slot />
 		</main>
 
-		<footer class="w-full py-6 mt-12 border-t border-zinc-800/50 font-mono text-sm text-zinc-500">
-			<div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-
-				<p>&copy; {new Date().getFullYear()} oscarjr.dev. All systems functional.</p>
+		<footer
+			class="w-full py-6 mt-12 border-t border-zinc-800/50 font-mono text-sm text-zinc-500"
+		>
+			<div
+				class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4"
+			>
+				<p>
+					&copy; {new Date().getFullYear()} oscarjr.dev. Updated {buildDate}.
+				</p>
 
 				<ul class="flex gap-6">
 					<li>
-						<a href="https://github.com/oscarjimenez05" target="_blank" class="hover:text-emerald-400 transition-colors">GitHub</a>
+						<a
+							href="https://github.com/oscarjimenez05"
+							target="_blank"
+							class="hover:text-emerald-400 transition-colors"
+							>GitHub</a
+						>
 					</li>
 					<li>
-						<a href="https://www.linkedin.com/in/oscarjimenez05/" target="_blank" class="hover:text-blue-400 transition-colors">LinkedIn</a>
+						<a
+							href="https://www.linkedin.com/in/oscarjimenez05/"
+							target="_blank"
+							class="hover:text-blue-400 transition-colors"
+							>LinkedIn</a
+						>
 					</li>
 					<li>
-						<a href="https://letterboxd.com/osquijr" target="_blank" class="hover:text-purple-400 transition-colors">Letterboxd</a>
+						<a
+							href="https://letterboxd.com/osquijr"
+							target="_blank"
+							class="hover:text-purple-400 transition-colors"
+							>Letterboxd</a
+						>
 					</li>
 				</ul>
-
 			</div>
 		</footer>
-
 	</body>
 </html>
 
