@@ -5,9 +5,9 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="home | osquijr.dev"
         themeClass="bg-violet-950 text-zinc-100 font-sans">
 	<div class="flex flex-col items-center text-center mt-24">
-		<h1 class="text-5xl font-bold tracking-tight mb-4">welcome to <span class="text-blue-400">my</span><span class="text-emerald-400">Portfolio</span></h1>
+		<h1 class="text-5xl font-bold tracking-tight mb-4 animate-in fade-in slide-in-from-bottom-5 duration-1000">welcome to <span class="text-blue-400">my</span><span class="text-emerald-400">Portfolio</span></h1>
 		<p class="text-xl font-medium">computerScience, math, music and film</p>
-		<p class="text-lg">by <span class="text-purple-400">oscarJimenez</span></p>
+		<p class="text-lg animate-in fade-in slide-in-from-bottom-2 duration-500 delay-1000 fill-mode-backwards">by <span class="text-purple-400">oscarJimenez</span></p>
 		<br><br>
 
 		<div class="w-full max-w-2xl bg-zinc-950 text-emerald-400 p-6 rounded-xl shadow-2xl text-left font-mono text-sm sm:text-base border border-zinc-800">
@@ -106,5 +106,5 @@ import Layout from '../layouts/Layout.astro';
 		}
 	}
 
-	setTimeout(typeWriter, 1000);
+	setTimeout(typeWriter, 1300);
 </script>
