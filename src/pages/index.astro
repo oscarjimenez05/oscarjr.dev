@@ -54,57 +54,61 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-	const options = [
-		[
-			{ text: "#include <stdio.h>", color: "text-emerald-400" },
-			{ text: "// initializing camera module...", color: "text-zinc-500" },
-			{ text: "printf(\"Initializing camera module...\");", color: "text-emerald-400" },
-			{ text: "return 0;", color: "text-emerald-400" }
-		],
-		[
-			{ text: "import film.cinematography.*;", color: "text-blue-400" },
-			{ text: "// setting up lighting...", color: "text-zinc-500" },
-			{ text: "render.start();", color: "text-blue-400" }
-		],
-		[
-			{ text: "const apology = \"Not the most frontend-oriented person clearly\";", color: "text-blue-400" },
-			{ text: "// but I can make things work...", color: "text-zinc-500" },
-			{ text: "console.log(apology);", color: "text-blue-400" }
-		]
-	];
+function initTypewriter() {
+	const container = document.getElementById("typewriter");
+		if (!container) return;
+
+		container.innerHTML = "";
+		const options = [
+			[
+				{ text: "#include <stdio.h>", color: "text-emerald-400" },
+				{ text: "// initializing camera module...", color: "text-zinc-500" },
+				{ text: "printf(\"Initializing camera module...\");", color: "text-emerald-400" },
+				{ text: "return 0;", color: "text-emerald-400" }
+			],
+			[
+				{ text: "import film.cinematography.*;", color: "text-blue-400" },
+				{ text: "// setting up lighting...", color: "text-zinc-500" },
+				{ text: "render.start();", color: "text-blue-400" }
+			],
+			[
+				{ text: "const apology = \"Not the most frontend-oriented person clearly\";", color: "text-blue-400" },
+				{ text: "// but I can make things work...", color: "text-zinc-500" },
+				{ text: "console.log(apology);", color: "text-blue-400" }
+			]
+		];
 
 	const codeLines = options[Math.floor(Math.random() * options.length)];
-
-	const container = document.getElementById("typewriter");
 	let lineIndex = 0;
 	let charIndex = 0;
 	let currentSpan: HTMLSpanElement | null = null;
 
 	function typeWriter() {
+		// Stop typing if the element is no longer in the DOM (e.g. user navigated away)
+		if (!document.getElementById("typewriter")) return;
 		if (lineIndex < codeLines.length) {
-
 			if (charIndex === 0) {
 				currentSpan = document.createElement("span");
 				currentSpan.className = codeLines[lineIndex].color;
 				container.appendChild(currentSpan);
 			}
 
-			// Type the next character into that specific span
 			currentSpan.innerHTML += codeLines[lineIndex].text.charAt(charIndex);
 			charIndex++;
 
-			// If we have reached the end of the current line
 			if (charIndex >= codeLines[lineIndex].text.length) {
 				lineIndex++;
 				charIndex = 0;
-				container.appendChild(document.createElement("br")); // Inject an actual HTML line break
+				container.appendChild(document.createElement("br"));
 				setTimeout(typeWriter, 250);
+			} else {
+				setTimeout(typeWriter, 30);
 			}
-			else{
-				setTimeout(typeWriter, 30); // Speed in milliseconds
 			}
 		}
+
+		setTimeout(typeWriter, 1300);
 	}
 
-	setTimeout(typeWriter, 1300);
+	document.addEventListener("astro:page-load", initTypewriter);
 </script>
