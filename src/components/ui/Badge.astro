@@ -1,10 +1,10 @@
 ---
 interface Props {
-  variant?: 'cyan' | 'zinc';
+  variant?: 'emerald' | 'zinc';
 }
 const { variant = 'zinc' } = Astro.props;
-const colorStyles = variant === 'cyan' 
-  ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' 
+const colorStyles = variant === 'emerald' 
+  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
   : 'bg-zinc-800/60 text-zinc-300 border-zinc-700/50';
 ---
 
