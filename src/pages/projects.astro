@@ -3,22 +3,38 @@ import Layout from '../layouts/Layout.astro';
 import Card from "../components/ui/Card.astro";
 import Badge from "../components/ui/Badge.astro";
 
-const projectFiles = import.meta.glob<{
-  frontmatter: {
-    title: string;
-    description: string;
-    badge?: string;
-    tags?: string[];
-  };
-}>('./projects/*.md', { eager: true });
+interface Frontmatter {
+  title: string;
+  description: string;
+  badge?: string;
+  tags?: string[];
+  date?: string;
+  priority?: number;
+}
 
-const projects = Object.entries(projectFiles).map(([filepath, post]) => {
-  const slug = filepath.replace(/^\.\/projects\//, '').replace(/\.md$/, '');
-  return {
-    ...post.frontmatter,
-    href: `/projects/${slug}`,
-  };
-});
+const projectFiles = import.meta.glob<{ frontmatter: Frontmatter }>(
+  './projects/*.md',
+  { eager: true }
+);
+
+const projects = Object.entries(projectFiles)
+  .map(([filepath, post]) => {
+    const slug = filepath.replace(/^\.\/projects\//, '').replace(/\.md$/, '');
+    return {
+      ...post.frontmatter,
+      href: `/projects/${slug}`,
+      dateValue: post.frontmatter.date ? new Date(post.frontmatter.date).getTime() : 0,
+      priorityValue: post.frontmatter.priority ?? 0,
+    };
+  })
+  .sort((a, b) => {
+    // 1. Sort by priority first (highest number first)
+    if (b.priorityValue !== a.priorityValue) {
+      return b.priorityValue - a.priorityValue;
+    }
+    // 2. Tie-break: Sort by date (newest first)
+    return b.dateValue - a.dateValue;
+  });
 ---
 
 <Layout title="projects | osquijr.dev"
