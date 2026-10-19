@@ -1,6 +1,9 @@
 ---
 layout: '../../layouts/Project.astro'
-title: Homelab
+title: NAS Homelab
+description: "Containerized media stack, automated backup pipelines, and secure reverse-proxy routing."
+badge: "Self-Hosted"
+tags: ["Docker", "Tailscale", "Caddy"]
 ---
 
 ## The Core Philosophy

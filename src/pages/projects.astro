@@ -2,44 +2,52 @@
 import Layout from '../layouts/Layout.astro';
 import Card from "../components/ui/Card.astro";
 import Badge from "../components/ui/Badge.astro";
+
+const projectFiles = import.meta.glob<{
+  frontmatter: {
+    title: string;
+    description: string;
+    badge?: string;
+    tags?: string[];
+  };
+}>('./projects/*.md', { eager: true });
+
+const projects = Object.entries(projectFiles).map(([filepath, post]) => {
+  const slug = filepath.replace(/^\.\/projects\//, '').replace(/\.md$/, '');
+  return {
+    ...post.frontmatter,
+    href: `/projects/${slug}`,
+  };
+});
 ---
 
 <Layout title="projects | osquijr.dev"
         themeClass="bg-sky-950 text-zinc-100 font-mono">
-        <section class="max-w-4xl mx-auto py-16 px-4 space-y-6">
-                <h1
-                        class="text-2xl font-semibold tracking-tight text-zinc-100 animate-in fade-in slide-in-from-top-2 duration-500"
-                >
-                        Featured Projects
-                </h1>
+  <section class="max-w-4xl mx-auto py-16 px-4 space-y-6">
+    <h1 class="text-2xl font-semibold tracking-tight text-zinc-100 animate-in fade-in slide-in-from-top-2 duration-500">
+      Featured Projects
+    </h1>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card
-                                title="Automated Homelab & NAS"
-                                description="Containerized media stack, automated backup pipelines, and secure reverse-proxy routing."
-                                badge="Self-Hosted"
-                                href="/projects/homelab"
-                                delay="100"
-                        >
-                                <div class="mt-4 flex gap-2">
-                                        <Badge variant="emerald">Docker</Badge>
-                                        <Badge>Tailscale</Badge>
-                                        <Badge>Caddy</Badge>
-                                </div>
-                        </Card>
-
-                        <Card
-                                title="PRNG Statistical Analysis"
-                                description="Empirical randomness evaluation of linear congruential generators and Lehmer codes using TestU01."
-                                badge="Research"
-                                href="/projects/prng"
-                                delay="200"
-                        >
-                                <div class="mt-4 flex gap-2">
-                                        <Badge variant="emerald">C / Cython</Badge>
-                                        <Badge>Statistical Modeling</Badge>
-                                </div>
-                        </Card>
-                </div>
-        </section>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {projects.map((project, index) => (
+        <Card
+          title={project.title}
+          description={project.description}
+          badge={project.badge}
+          href={project.href}
+          delay={String(((index % 4) + 1) * 100) as '100' | '200' | '300' | '500'}
+        >
+          {project.tags && project.tags.length > 0 && (
+            <div class="mt-4 flex flex-wrap gap-2">
+              {project.tags.map((tag) => (
+                <Badge variant={tag.includes('Docker') || tag.includes('C /') ? 'emerald' : 'zinc'}>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
+  </section>
 </Layout>
