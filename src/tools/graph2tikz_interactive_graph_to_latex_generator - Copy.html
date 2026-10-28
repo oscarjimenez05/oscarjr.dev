@@ -7,40 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Phosphor Icons for clean math/graph interface icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
-    
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .font-mono-code {
-      font-family: 'Fira Code', monospace;
-    }
-
-    /* Custom canvas cursor depending on active mode */
-    .canvas-add-node { cursor: crosshair; }
-    .canvas-add-edge { cursor: pointer; }
-    .canvas-select { cursor: default; }
-    .canvas-drag { cursor: grab; }
-    .canvas-drag:active { cursor: grabbing; }
-
-    /* Custom scrollbars */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-  </style>
 </head>
 <body class="bg-slate-900 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
 
@@ -66,10 +32,6 @@
 
     <!-- Quick Tool Actions & Presets -->
     <div class="flex items-center gap-3">
-      <button id="btn-load-sample" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
-        <i class="ph ph-lightning text-amber-400"></i> Load Fig. 1 Sample
-      </button>
-
       <label class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition flex items-center gap-1.5 cursor-pointer shadow-sm">
         <i class="ph ph-upload-simple"></i> Upload Graph Image
         <input type="file" id="image-upload" accept="image/*" class="hidden">
@@ -845,72 +807,6 @@
       render();
     });
 
-    // Load Figure 1 Sample Automatically
-    function loadFigure1Sample() {
-      const width = canvas.width / (window.devicePixelRatio || 1);
-      const height = canvas.height / (window.devicePixelRatio || 1);
-      
-      const cx = width / 2;
-      const cy = height / 2;
-      const s = Math.min(width, height) * 0.7;
-
-      // Cleanly proportioned coords corresponding to Figure 1 from homework
-      const sampleNodes = [
-        { id: 'n_a', label: 'a', rx: -0.45, ry: 0.35 },
-        { id: 'n_b', label: 'b', rx: -0.50, ry: -0.42 },
-        { id: 'n_c', label: 'c', rx: -0.05, ry: -0.08 },
-        { id: 'n_d', label: 'd', rx: -0.36, ry: -0.08 },
-        { id: 'n_e', label: 'e', rx: 0.38,  ry: 0.42 },
-        { id: 'n_f', label: 'f', rx: 0.34,  ry: -0.28 },
-        { id: 'n_g', label: 'g', rx: -0.08, ry: 0.46 },
-        { id: 'n_h', label: 'h', rx: -0.10, ry: -0.46 },
-        { id: 'n_i', label: 'i', rx: 0.52,  ry: 0.18 },
-        { id: 'n_j', label: 'j', rx: 0.18,  ry: 0.10 }
-      ];
-
-      state.nodes = sampleNodes.map(sn => ({
-        id: sn.id,
-        label: sn.label,
-        x: cx + sn.rx * s,
-        y: cy + sn.ry * s
-      }));
-
-      // Original 14 edges from Figure 1
-      const sampleEdges = [
-        ['b', 'c'], ['h', 'b'], ['h', 'd'], ['h', 'c'], ['h', 'f'], ['h', 'i'],
-        ['a', 'd'], ['d', 'c'], ['d', 'j'], ['a', 'c'], ['a', 'g'], ['g', 'j'],
-        ['g', 'e'], ['e', 'f'], ['a', 'i'], ['f', 'i']
-      ];
-
-      // Re-map edges to IDs (matching original figure precisely)
-      state.edges = [];
-      const edgePairs = [
-        ['b', 'c'], ['h', 'd'], ['h', 'c'], ['h', 'f'], ['h', 'i'],
-        ['a', 'd'], ['d', 'c'], ['d', 'j'], ['a', 'c'], ['a', 'g'],
-        ['g', 'j'], ['g', 'e'], ['e', 'f'], ['a', 'i']
-      ];
-
-      edgePairs.forEach(([uLab, vLab], index) => {
-        const u = state.nodes.find(n => n.label === uLab);
-        const v = state.nodes.find(n => n.label === vLab);
-        if (u && v) {
-          state.edges.push({
-            id: 'e_' + index,
-            u: u.id,
-            v: v.id
-          });
-        }
-      });
-
-      state.subgraphFilter = null;
-      state.subgraphOmitEdges.clear();
-      document.getElementById('subgraph-vertices').value = '';
-      showToast('Figure 1 loaded!');
-      render();
-    }
-
-    document.getElementById('btn-load-sample').addEventListener('click', loadFigure1Sample);
-
     // Subgraph Filtering Logic
     function applySubgraphFilter(listStr) {
       if (!listStr || !listStr.trim()) {
@@ -950,9 +846,6 @@
     document.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const preset = btn.dataset.preset;
-        if (state.nodes.length === 0) {
-          loadFigure1Sample();
-        }
 
         state.subgraphOmitEdges.clear();
 
@@ -1103,7 +996,6 @@
     // Initialize application on window load
     window.onload = function() {
       resizeCanvas();
-      loadFigure1Sample();
       setTool('select');
     };
   </script>
