@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph2TikZ - Visual Graph to LaTeX Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons for clean math/graph interface icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .font-mono-code {
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Custom canvas cursor depending on active mode */
+    .canvas-add-node { cursor: crosshair; }
+    .canvas-add-edge { cursor: pointer; }
+    .canvas-select { cursor: default; }
+    .canvas-drag { cursor: grab; }
+    .canvas-drag:active { cursor: grabbing; }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- Notification Toast Container -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none bg-indigo-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2">
+    <i class="ph ph-check-circle text-lg"></i>
+    <span id="toast-msg">Copied to clipboard!</span>
+  </div>
+
+  <!-- Header Bar -->
+  <header class="h-14 border-b border-slate-800 bg-slate-950/80 backdrop-blur px-5 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <i class="ph-bold ph-graph text-white text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-slate-100 text-base leading-tight tracking-tight flex items-center gap-2">
+          Graph2TikZ 
+          <span class="text-[10px] font-medium tracking-normal uppercase bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">LaTeX Companion</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Quick Tool Actions & Presets -->
+    <div class="flex items-center gap-3">
+      <button id="btn-load-sample" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
+        <i class="ph ph-lightning text-amber-400"></i> Load Fig. 1 Sample
+      </button>
+
+      <label class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+        <i class="ph ph-upload-simple"></i> Upload Graph Image
+        <input type="file" id="image-upload" accept="image/*" class="hidden">
+      </label>
+
+      <button id="btn-clear-all" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-900/50 text-xs transition" title="Clear Canvas">
+        <i class="ph ph-trash text-sm"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Left Toolbar & Tools Palette -->
+    <aside class="w-16 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-4 gap-3 shrink-0">
+      <button data-tool="select" class="tool-btn active w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent" title="Select & Move (V)">
+        <i class="ph-bold ph-cursor text-lg"></i>
+        <span class="text-[9px]">Select</span>
+      </button>
+
+      <button data-tool="add-node" class="tool-btn w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent" title="Add Vertex (N)">
+        <i class="ph-bold ph-plus-circle text-lg"></i>
+        <span class="text-[9px]">Node</span>
+      </button>
+
+      <button data-tool="add-edge" class="tool-btn w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent" title="Draw Edge (E)">
+        <i class="ph-bold ph-line-segment text-lg"></i>
+        <span class="text-[9px]">Edge</span>
+      </button>
+
+      <button data-tool="delete" class="tool-btn w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition text-slate-400 hover:text-rose-400 hover:bg-slate-800 border border-transparent" title="Delete Element (D)">
+        <i class="ph-bold ph-eraser text-lg"></i>
+        <span class="text-[9px]">Erase</span>
+      </button>
+
+      <div class="w-8 h-px bg-slate-800 my-1"></div>
+
+      <!-- Quick Subgraph Filter Tool -->
+      <button id="btn-modal-subgraph" class="w-11 h-11 rounded-xl flex flex-col items-center justify-center gap-0.5 text-xs transition text-indigo-400 hover:bg-indigo-950/40 border border-indigo-500/20" title="Induced Subgraph Filter">
+        <i class="ph-bold ph-funnel text-lg"></i>
+        <span class="text-[9px]">Subset</span>
+      </button>
+
+      <div class="mt-auto flex flex-col items-center gap-2 text-slate-500">
+        <button id="btn-snap-grid" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-slate-800 text-slate-400 text-sm" title="Snap to Grid Toggle">
+          <i class="ph ph-grid-four text-base"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Center Canvas Workspace -->
+    <main class="flex-1 flex flex-col bg-slate-900/50 relative overflow-hidden">
+      
+      <!-- Canvas Status Bar / Overlay Controls -->
+      <div class="absolute top-3 left-4 z-10 flex items-center gap-2 pointer-events-none">
+        <div class="pointer-events-auto bg-slate-900/90 backdrop-blur border border-slate-700/60 rounded-lg px-3 py-1.5 flex items-center gap-3 text-xs text-slate-300 shadow-md">
+          <span class="flex items-center gap-1.5">
+            <span id="active-tool-indicator" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span id="active-tool-name" class="font-medium text-slate-200">Select Mode</span>
+          </span>
+          <span class="text-slate-600">|</span>
+          <span id="node-edge-counter">0 vertices, 0 edges</span>
+        </div>
+
+        <div class="pointer-events-auto bg-slate-900/90 backdrop-blur border border-slate-700/60 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-xs text-slate-300 shadow-md">
+          <label class="flex items-center gap-1 text-[11px] text-slate-400">
+            Image Opacity:
+            <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.65" class="w-20 accent-indigo-500 h-1">
+          </label>
+        </div>
+      </div>
+
+      <!-- Tips overlay for paste -->
+      <div id="paste-hint" class="absolute bottom-4 left-4 z-10 pointer-events-none text-[11px] text-slate-500 bg-slate-950/80 backdrop-blur border border-slate-800 rounded px-2.5 py-1">
+        Tip: Paste image with <kbd class="bg-slate-800 px-1 py-0.5 rounded text-slate-300">Ctrl+V</kbd> / <kbd class="bg-slate-800 px-1 py-0.5 rounded text-slate-300">⌘+V</kbd> directly
+      </div>
+
+      <!-- Canvas Container -->
+      <div id="canvas-container" class="w-full h-full relative overflow-hidden bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+        <canvas id="graph-canvas" class="w-full h-full block"></canvas>
+      </div>
+    </main>
+
+    <!-- Right Side: TikZ Generator & Export Inspector -->
+    <aside class="w-96 border-l border-slate-800 bg-slate-950 flex flex-col shrink-0">
+      
+      <!-- Panel Header & Mode Switcher -->
+      <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="ph-bold ph-code text-indigo-400"></i>
+          <h2 class="text-sm font-semibold text-slate-200">TikZ LaTeX Code</h2>
+        </div>
+        <button id="btn-copy-code" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm active:scale-95">
+          <i class="ph ph-copy"></i> Copy TikZ
+        </button>
+      </div>
+
+      <!-- Configuration Toggles -->
+      <div class="p-3.5 border-b border-slate-800/80 bg-slate-900/40 text-xs space-y-3">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">TikZ Scale</label>
+            <input type="number" id="tikz-scale" step="0.1" value="0.9" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Coord Grid Width (cm)</label>
+            <input type="number" id="tikz-width-span" step="0.5" value="6.5" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs font-mono focus:border-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+            <input type="checkbox" id="chk-auto-flip-y" checked class="rounded accent-indigo-600">
+            <span>Invert Y (LaTeX standard)</span>
+          </label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+            <input type="checkbox" id="chk-standalone" class="rounded accent-indigo-600">
+            <span>Full Document</span>
+          </label>
+        </div>
+
+        <!-- Subgraph Filter Input Section -->
+        <div class="pt-2 border-t border-slate-800/80">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[11px] font-medium text-slate-300 flex items-center gap-1">
+              <i class="ph ph-subset text-indigo-400"></i> Active Subgraph Filter
+            </span>
+            <button id="btn-reset-subgraph" class="text-[10px] text-indigo-400 hover:underline">Show All</button>
+          </div>
+          <div class="flex gap-1.5">
+            <input type="text" id="subgraph-vertices" placeholder="e.g. g, j, d, a, c, i" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs font-mono focus:border-indigo-500 focus:outline-none placeholder:text-slate-500">
+            <button id="btn-apply-subgraph" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium">Apply</button>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+            <label class="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="chk-induced-only" checked class="rounded accent-indigo-600">
+              <span>Induced Only</span>
+            </label>
+            <span id="subgraph-stats" class="text-slate-500">All 10 active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LaTeX Code Output Box -->
+      <div class="flex-1 flex flex-col p-3 overflow-hidden bg-slate-950">
+        <textarea id="tikz-output" readonly class="w-full flex-1 bg-slate-900 border border-slate-800 rounded-lg p-3 text-slate-300 font-mono-code text-[11px] leading-relaxed resize-none focus:outline-none focus:border-indigo-500/50 shadow-inner select-all"></textarea>
+      </div>
+
+      <!-- Vertex Inspector / Quick Edit -->
+      <div id="inspector-panel" class="p-3 bg-slate-900 border-t border-slate-800 text-xs">
+        <div class="flex items-center justify-between mb-2">
+          <span class="font-semibold text-slate-300 flex items-center gap-1.5">
+            <i class="ph ph-sliders"></i> Selection Inspector
+          </span>
+          <span id="selected-info" class="text-slate-500 font-mono">None</span>
+        </div>
+        <div id="selection-controls" class="flex items-center gap-2 opacity-40 pointer-events-none">
+          <div class="flex-1 flex items-center gap-1">
+            <span class="text-slate-400">Label:</span>
+            <input type="text" id="node-label-input" maxlength="4" class="w-16 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 font-mono text-center">
+          </div>
+          <button id="btn-delete-selected" class="px-2 py-1 rounded bg-rose-900/30 text-rose-300 hover:bg-rose-900/50 border border-rose-800/40 text-xs">
+            Delete
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Custom In-App Modal / Helper for Quick Problem 1 Answers -->
+  <div id="preset-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="font-bold text-slate-100 flex items-center gap-2">
+          <i class="ph ph-folder-open text-indigo-400"></i> Exercise 1 Subgraph Presets
+        </h3>
+        <button id="close-modal" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <p class="text-xs text-slate-400 my-3">
+        Select which part of Question 1 to instantly filter and export:
+      </p>
+      <div class="space-y-2">
+        <button data-preset="all" class="preset-btn w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition flex justify-between items-center text-xs">
+          <div>
+            <div class="font-semibold text-slate-200">Entire Graph G</div>
+            <div class="text-[11px] text-slate-400">All 10 vertices {a, b, c, d, e, f, g, h, i, j}</div>
+          </div>
+          <i class="ph ph-arrow-right text-slate-400"></i>
+        </button>
+
+        <button data-preset="d" class="preset-btn w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition flex justify-between items-center text-xs">
+          <div>
+            <div class="font-semibold text-indigo-300">Part (d) Induced Subgraph</div>
+            <div class="text-[11px] text-slate-400">{g, j, d, a, c, i}</div>
+          </div>
+          <i class="ph ph-arrow-right text-slate-400"></i>
+        </button>
+
+        <button data-preset="e" class="preset-btn w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition flex justify-between items-center text-xs">
+          <div>
+            <div class="font-semibold text-indigo-300">Part (e) Induced Subgraph</div>
+            <div class="text-[11px] text-slate-400">{c, h, g, i, j}</div>
+          </div>
+          <i class="ph ph-arrow-right text-slate-400"></i>
+        </button>
+
+        <button data-preset="f" class="preset-btn w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition flex justify-between items-center text-xs">
+          <div>
+            <div class="font-semibold text-amber-300">Part (f) Non-induced Subgraph</div>
+            <div class="text-[11px] text-slate-400">{e, f, b, c, h, j} (omits edge bc)</div>
+          </div>
+          <i class="ph ph-arrow-right text-slate-400"></i>
+        </button>
+
+        <button data-preset="g" class="preset-btn w-full text-left p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 transition flex justify-between items-center text-xs">
+          <div>
+            <div class="font-semibold text-emerald-300">Part (g) Spanning Subgraph</div>
+            <div class="text-[11px] text-slate-400">All 10 vertices, exactly 10 edges</div>
+          </div>
+          <i class="ph ph-arrow-right text-slate-400"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Application Logic -->
+  <script>
+    // State management
+    const state = {
+      tool: 'select', // 'select', 'add-node', 'add-edge', 'delete'
+      snapToGrid: false,
+      gridStep: 20,
+      nodes: [],
+      edges: [],
+      // Image backdrop
+      bgImage: null,
+      bgImageOpacity: 0.65,
+      // Selection & Interaction
+      selectedNodeId: null,
+      selectedEdgeId: null,
+      isDraggingNode: false,
+      edgeDraftSourceId: null,
+      mousePos: { x: 0, y: 0 },
+      // Subgraph Filtering
+      subgraphFilter: null, // null means all, or Array of label lowercase
+      subgraphOmitEdges: new Set(), // specifically for part (f) or custom omissions
+      inducedMode: true,
+      // TikZ export options
+      scale: 0.9,
+      spanWidthCm: 6.5,
+      invertY: true,
+      standalone: false
+    };
+
+    // Label sequence helper for new nodes
+    const labelSequence = "abcdefghijklmnopqrstuvwxyz";
+    function getNextAvailableLabel() {
+      const existing = new Set(state.nodes.map(n => n.label.toLowerCase()));
+      for (const char of labelSequence) {
+        if (!existing.has(char)) return char;
+      }
+      return 'v' + (state.nodes.length + 1);
+    }
+
+    // Canvas references
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    // Resize canvas fluidly
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+      render();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    // Coordinate conversions between screen and normalized TikZ coords
+    function getNormalizedCoords(node) {
+      if (state.nodes.length === 0) return { x: 0, y: 0 };
+      
+      let minX = Infinity, maxX = -Infinity;
+      let minY = Infinity, maxY = -Infinity;
+
+      state.nodes.forEach(n => {
+        if (n.x < minX) minX = n.x;
+        if (n.x > maxX) maxX = n.x;
+        if (n.y < minY) minY = n.y;
+        if (n.y > maxY) maxY = n.y;
+      });
+
+      const spanX = (maxX - minX) || 1;
+      const spanY = (maxY - minY) || 1;
+      const targetWidth = parseFloat(document.getElementById('tikz-width-span').value) || 6.5;
+      const aspect = spanY / spanX;
+      const targetHeight = targetWidth * aspect;
+
+      const normX = ((node.x - minX) / spanX) * targetWidth;
+      let normY = ((node.y - minY) / spanY) * targetHeight;
+      
+      if (state.invertY) {
+        normY = targetHeight - normY;
+      }
+
+      return {
+        x: Number(normX.toFixed(2)),
+        y: Number(normY.toFixed(2))
+      };
+    }
+
+    // Render Canvas
+    function render() {
+      const width = canvas.width / (window.devicePixelRatio || 1);
+      const height = canvas.height / (window.devicePixelRatio || 1);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw uploaded background image if present
+      if (state.bgImage) {
+        ctx.save();
+        ctx.globalAlpha = state.bgImageOpacity;
+        
+        // Fit & center image preserving aspect ratio
+        const imgAspect = state.bgImage.width / state.bgImage.height;
+        const canvasAspect = width / height;
+        let dw, dh, dx, dy;
+
+        if (imgAspect > canvasAspect) {
+          dw = width * 0.92;
+          dh = dw / imgAspect;
+        } else {
+          dh = height * 0.92;
+          dw = dh * imgAspect;
+        }
+        dx = (width - dw) / 2;
+        dy = (height - dh) / 2;
+
+        ctx.drawImage(state.bgImage, dx, dy, dw, dh);
+        ctx.restore();
+      }
+
+      // Draw grid if snap enabled
+      if (state.snapToGrid) {
+        ctx.save();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 0.5;
+        const step = state.gridStep;
+        for (let x = 0; x < width; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < height; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      const activeNodes = getActiveNodes();
+      const activeNodeIds = new Set(activeNodes.map(n => n.id));
+      const activeEdges = getActiveEdges(activeNodeIds);
+
+      // Draw Edges
+      state.edges.forEach(edge => {
+        const u = state.nodes.find(n => n.id === edge.u);
+        const v = state.nodes.find(n => n.id === edge.v);
+        if (!u || !v) return;
+
+        const isFilteredOut = !activeEdges.some(e => e.id === edge.id);
+        const isSelected = (state.selectedEdgeId === edge.id);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(u.x, u.y);
+        ctx.lineTo(v.x, v.y);
+
+        if (isFilteredOut) {
+          ctx.strokeStyle = 'rgba(71, 85, 105, 0.25)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+        } else if (isSelected) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3.5;
+        } else {
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 2.5;
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Draw Edge Creation In-Progress Line
+      if (state.tool === 'add-edge' && state.edgeDraftSourceId) {
+        const srcNode = state.nodes.find(n => n.id === state.edgeDraftSourceId);
+        if (srcNode) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 4]);
+          ctx.moveTo(srcNode.x, srcNode.y);
+          ctx.lineTo(state.mousePos.x, state.mousePos.y);
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // Draw Nodes
+      state.nodes.forEach(node => {
+        const isFilteredOut = !activeNodeIds.has(node.id);
+        const isSelected = (state.selectedNodeId === node.id);
+        const isDraftSource = (state.edgeDraftSourceId === node.id);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 16, 0, Math.PI * 2);
+
+        if (isFilteredOut) {
+          ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+          ctx.font = '600 13px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(node.label, node.x, node.y);
+        } else {
+          // Node fill
+          ctx.fillStyle = isDraftSource ? '#6366f1' : '#ffffff';
+          ctx.fill();
+
+          // Node border
+          ctx.strokeStyle = isSelected ? '#38bdf8' : (isDraftSource ? '#c084fc' : '#0f172a');
+          ctx.lineWidth = isSelected ? 3.5 : 2.5;
+          ctx.stroke();
+
+          // Node Text label
+          ctx.fillStyle = isDraftSource ? '#ffffff' : '#0f172a';
+          ctx.font = '700 14px "Fira Code", monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(node.label, node.x, node.y + 0.5);
+        }
+
+        ctx.restore();
+      });
+
+      updateCode();
+      updateCounter();
+    }
+
+    // Filter Helpers
+    function getActiveNodes() {
+      if (!state.subgraphFilter) return state.nodes;
+      const lowerSet = new Set(state.subgraphFilter.map(s => s.toLowerCase()));
+      return state.nodes.filter(n => lowerSet.has(n.label.toLowerCase()));
+    }
+
+    function getActiveEdges(activeNodeIds) {
+      return state.edges.filter(edge => {
+        if (!activeNodeIds.has(edge.u) || !activeNodeIds.has(edge.v)) return false;
+        if (state.subgraphOmitEdges.has(edge.id)) return false;
+        return true;
+      });
+    }
+
+    function findNodeAt(x, y) {
+      for (let i = state.nodes.length - 1; i >= 0; i--) {
+        const n = state.nodes[i];
+        const dist = Math.hypot(n.x - x, n.y - y);
+        if (dist <= 18) return n;
+      }
+      return null;
+    }
+
+    function findEdgeAt(x, y) {
+      for (let i = state.edges.length - 1; i >= 0; i--) {
+        const e = state.edges[i];
+        const u = state.nodes.find(n => n.id === e.u);
+        const v = state.nodes.find(n => n.id === e.v);
+        if (!u || !v) continue;
+
+        // Distance from point to segment
+        const dist = distToSegment({ x, y }, u, v);
+        if (dist <= 6) return e;
+      }
+      return null;
+    }
+
+    function distToSegment(p, v, w) {
+      const l2 = (v.x - w.x)**2 + (v.y - w.y)**2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+    }
+
+    // Tool Management
+    function setTool(toolName) {
+      state.tool = toolName;
+      state.edgeDraftSourceId = null;
+
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        if (btn.dataset.tool === toolName) {
+          btn.classList.add('bg-indigo-600/20', 'text-indigo-400', 'border-indigo-500/40');
+          btn.classList.remove('text-slate-400', 'border-transparent');
+        } else {
+          btn.classList.remove('bg-indigo-600/20', 'text-indigo-400', 'border-indigo-500/40');
+          btn.classList.add('text-slate-400', 'border-transparent');
+        }
+      });
+
+      const indicator = document.getElementById('active-tool-indicator');
+      const name = document.getElementById('active-tool-name');
+
+      if (toolName === 'select') {
+        canvas.className = 'w-full h-full block canvas-select';
+        indicator.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        name.innerText = 'Select / Move Node';
+      } else if (toolName === 'add-node') {
+        canvas.className = 'w-full h-full block canvas-add-node';
+        indicator.className = 'w-2 h-2 rounded-full bg-indigo-400';
+        name.innerText = 'Click to Place Vertex';
+      } else if (toolName === 'add-edge') {
+        canvas.className = 'w-full h-full block canvas-add-edge';
+        indicator.className = 'w-2 h-2 rounded-full bg-purple-400';
+        name.innerText = 'Click 2 Nodes to Connect';
+      } else if (toolName === 'delete') {
+        canvas.className = 'w-full h-full block cursor-not-allowed';
+        indicator.className = 'w-2 h-2 rounded-full bg-rose-400';
+        name.innerText = 'Click to Delete Node or Edge';
+      }
+      render();
+    }
+
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTool(btn.dataset.tool));
+    });
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'v' || e.key === 'V') setTool('select');
+      if (e.key === 'n' || e.key === 'N') setTool('add-node');
+      if (e.key === 'e' || e.key === 'E') setTool('add-edge');
+      if (e.key === 'd' || e.key === 'D') setTool('delete');
+      if (e.key === 'Escape') {
+        state.edgeDraftSourceId = null;
+        state.selectedNodeId = null;
+        state.selectedEdgeId = null;
+        updateInspector();
+        render();
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        deleteSelection();
+      }
+    });
+
+    function deleteSelection() {
+      if (state.selectedNodeId) {
+        state.edges = state.edges.filter(ed => ed.u !== state.selectedNodeId && ed.v !== state.selectedNodeId);
+        state.nodes = state.nodes.filter(n => n.id !== state.selectedNodeId);
+        state.selectedNodeId = null;
+      }
+      if (state.selectedEdgeId) {
+        state.edges = state.edges.filter(ed => ed.id !== state.selectedEdgeId);
+        state.selectedEdgeId = null;
+      }
+      updateInspector();
+      render();
+    }
+
+    // Canvas Interactions
+    function getCanvasCoords(evt) {
+      const rect = canvas.getBoundingClientRect();
+      let x = evt.clientX - rect.left;
+      let y = evt.clientY - rect.top;
+
+      if (state.snapToGrid) {
+        x = Math.round(x / state.gridStep) * state.gridStep;
+        y = Math.round(y / state.gridStep) * state.gridStep;
+      }
+      return { x, y };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const { x, y } = getCanvasCoords(e);
+      const clickedNode = findNodeAt(x, y);
+      const clickedEdge = clickedNode ? null : findEdgeAt(x, y);
+
+      if (state.tool === 'select') {
+        if (clickedNode) {
+          state.selectedNodeId = clickedNode.id;
+          state.selectedEdgeId = null;
+          state.isDraggingNode = true;
+        } else if (clickedEdge) {
+          state.selectedEdgeId = clickedEdge.id;
+          state.selectedNodeId = null;
+        } else {
+          state.selectedNodeId = null;
+          state.selectedEdgeId = null;
+        }
+        updateInspector();
+      } else if (state.tool === 'add-node') {
+        if (!clickedNode) {
+          const newNode = {
+            id: 'n_' + Date.now() + Math.random().toString(36).substr(2, 4),
+            x,
+            y,
+            label: getNextAvailableLabel()
+          };
+          state.nodes.push(newNode);
+          state.selectedNodeId = newNode.id;
+          updateInspector();
+        }
+      } else if (state.tool === 'add-edge') {
+        if (clickedNode) {
+          if (!state.edgeDraftSourceId) {
+            state.edgeDraftSourceId = clickedNode.id;
+          } else {
+            if (state.edgeDraftSourceId !== clickedNode.id) {
+              // Add edge if not already exists
+              const srcId = state.edgeDraftSourceId;
+              const dstId = clickedNode.id;
+              const exists = state.edges.some(ed => 
+                (ed.u === srcId && ed.v === dstId) || (ed.u === dstId && ed.v === srcId)
+              );
+              if (!exists) {
+                state.edges.push({
+                  id: 'e_' + Date.now(),
+                  u: srcId,
+                  v: dstId
+                });
+              }
+            }
+            state.edgeDraftSourceId = null;
+          }
+        } else {
+          state.edgeDraftSourceId = null;
+        }
+      } else if (state.tool === 'delete') {
+        if (clickedNode) {
+          state.edges = state.edges.filter(ed => ed.u !== clickedNode.id && ed.v !== clickedNode.id);
+          state.nodes = state.nodes.filter(n => n.id !== clickedNode.id);
+        } else if (clickedEdge) {
+          state.edges = state.edges.filter(ed => ed.id !== clickedEdge.id);
+        }
+      }
+
+      render();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      state.mousePos.x = e.clientX - rect.left;
+      state.mousePos.y = e.clientY - rect.top;
+
+      if (state.isDraggingNode && state.selectedNodeId) {
+        const node = state.nodes.find(n => n.id === state.selectedNodeId);
+        if (node) {
+          const { x, y } = getCanvasCoords(e);
+          node.x = x;
+          node.y = y;
+          render();
+        }
+      } else if (state.tool === 'add-edge' && state.edgeDraftSourceId) {
+        render();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      state.isDraggingNode = false;
+    });
+
+    // Inspector Updates
+    function updateInspector() {
+      const controls = document.getElementById('selection-controls');
+      const labelInput = document.getElementById('node-label-input');
+      const infoText = document.getElementById('selected-info');
+
+      if (state.selectedNodeId) {
+        const node = state.nodes.find(n => n.id === state.selectedNodeId);
+        if (node) {
+          controls.classList.remove('opacity-40', 'pointer-events-none');
+          labelInput.value = node.label;
+          infoText.innerText = `Node "${node.label}"`;
+          return;
+        }
+      } else if (state.selectedEdgeId) {
+        const edge = state.edges.find(e => e.id === state.selectedEdgeId);
+        if (edge) {
+          const u = state.nodes.find(n => n.id === edge.u);
+          const v = state.nodes.find(n => n.id === edge.v);
+          controls.classList.remove('opacity-40', 'pointer-events-none');
+          labelInput.value = '';
+          labelInput.disabled = true;
+          infoText.innerText = `Edge (${u?.label}—${v?.label})`;
+          return;
+        }
+      }
+
+      controls.classList.add('opacity-40', 'pointer-events-none');
+      labelInput.disabled = false;
+      labelInput.value = '';
+      infoText.innerText = 'None';
+    }
+
+    document.getElementById('node-label-input').addEventListener('input', (e) => {
+      if (state.selectedNodeId) {
+        const node = state.nodes.find(n => n.id === state.selectedNodeId);
+        if (node && e.target.value.trim()) {
+          node.label = e.target.value.trim();
+          render();
+        }
+      }
+    });
+
+    document.getElementById('btn-delete-selected').addEventListener('click', deleteSelection);
+
+    // Image Upload Handling
+    document.getElementById('image-upload').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadFileAsImage(file);
+    });
+
+    // Paste Image from Clipboard
+    window.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          loadFileAsImage(blob);
+          showToast('Image pasted from clipboard!');
+          break;
+        }
+      }
+    });
+
+    function loadFileAsImage(file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const img = new Image();
+        img.onload = () => {
+          state.bgImage = img;
+          render();
+          showToast('Background image loaded!');
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('bg-opacity').addEventListener('input', (e) => {
+      state.bgImageOpacity = parseFloat(e.target.value);
+      render();
+    });
+
+    document.getElementById('btn-snap-grid').addEventListener('click', () => {
+      state.snapToGrid = !state.snapToGrid;
+      document.getElementById('btn-snap-grid').classList.toggle('text-indigo-400', state.snapToGrid);
+      render();
+    });
+
+    // Load Figure 1 Sample Automatically
+    function loadFigure1Sample() {
+      const width = canvas.width / (window.devicePixelRatio || 1);
+      const height = canvas.height / (window.devicePixelRatio || 1);
+      
+      const cx = width / 2;
+      const cy = height / 2;
+      const s = Math.min(width, height) * 0.7;
+
+      // Cleanly proportioned coords corresponding to Figure 1 from homework
+      const sampleNodes = [
+        { id: 'n_a', label: 'a', rx: -0.45, ry: 0.35 },
+        { id: 'n_b', label: 'b', rx: -0.50, ry: -0.42 },
+        { id: 'n_c', label: 'c', rx: -0.05, ry: -0.08 },
+        { id: 'n_d', label: 'd', rx: -0.36, ry: -0.08 },
+        { id: 'n_e', label: 'e', rx: 0.38,  ry: 0.42 },
+        { id: 'n_f', label: 'f', rx: 0.34,  ry: -0.28 },
+        { id: 'n_g', label: 'g', rx: -0.08, ry: 0.46 },
+        { id: 'n_h', label: 'h', rx: -0.10, ry: -0.46 },
+        { id: 'n_i', label: 'i', rx: 0.52,  ry: 0.18 },
+        { id: 'n_j', label: 'j', rx: 0.18,  ry: 0.10 }
+      ];
+
+      state.nodes = sampleNodes.map(sn => ({
+        id: sn.id,
+        label: sn.label,
+        x: cx + sn.rx * s,
+        y: cy + sn.ry * s
+      }));
+
+      // Original 14 edges from Figure 1
+      const sampleEdges = [
+        ['b', 'c'], ['h', 'b'], ['h', 'd'], ['h', 'c'], ['h', 'f'], ['h', 'i'],
+        ['a', 'd'], ['d', 'c'], ['d', 'j'], ['a', 'c'], ['a', 'g'], ['g', 'j'],
+        ['g', 'e'], ['e', 'f'], ['a', 'i'], ['f', 'i']
+      ];
+
+      // Re-map edges to IDs (matching original figure precisely)
+      state.edges = [];
+      const edgePairs = [
+        ['b', 'c'], ['h', 'd'], ['h', 'c'], ['h', 'f'], ['h', 'i'],
+        ['a', 'd'], ['d', 'c'], ['d', 'j'], ['a', 'c'], ['a', 'g'],
+        ['g', 'j'], ['g', 'e'], ['e', 'f'], ['a', 'i']
+      ];
+
+      edgePairs.forEach(([uLab, vLab], index) => {
+        const u = state.nodes.find(n => n.label === uLab);
+        const v = state.nodes.find(n => n.label === vLab);
+        if (u && v) {
+          state.edges.push({
+            id: 'e_' + index,
+            u: u.id,
+            v: v.id
+          });
+        }
+      });
+
+      state.subgraphFilter = null;
+      state.subgraphOmitEdges.clear();
+      document.getElementById('subgraph-vertices').value = '';
+      showToast('Figure 1 loaded!');
+      render();
+    }
+
+    document.getElementById('btn-load-sample').addEventListener('click', loadFigure1Sample);
+
+    // Subgraph Filtering Logic
+    function applySubgraphFilter(listStr) {
+      if (!listStr || !listStr.trim()) {
+        state.subgraphFilter = null;
+        state.subgraphOmitEdges.clear();
+        document.getElementById('subgraph-stats').innerText = `All ${state.nodes.length} active`;
+      } else {
+        const tokens = listStr.split(/[\s,]+/).filter(Boolean).map(t => t.trim().toLowerCase());
+        state.subgraphFilter = tokens;
+        const active = getActiveNodes();
+        document.getElementById('subgraph-stats').innerText = `${active.length} active of ${state.nodes.length}`;
+      }
+      render();
+    }
+
+    document.getElementById('btn-apply-subgraph').addEventListener('click', () => {
+      applySubgraphFilter(document.getElementById('subgraph-vertices').value);
+    });
+
+    document.getElementById('btn-reset-subgraph').addEventListener('click', () => {
+      document.getElementById('subgraph-vertices').value = '';
+      applySubgraphFilter('');
+    });
+
+    // Preset Modal Controls
+    const modal = document.getElementById('preset-modal');
+    document.getElementById('btn-modal-subgraph').addEventListener('click', () => {
+      modal.classList.remove('hidden');
+    });
+    document.getElementById('close-modal').addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.add('hidden');
+    });
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        if (state.nodes.length === 0) {
+          loadFigure1Sample();
+        }
+
+        state.subgraphOmitEdges.clear();
+
+        if (preset === 'all') {
+          document.getElementById('subgraph-vertices').value = '';
+          applySubgraphFilter('');
+        } else if (preset === 'd') {
+          const vStr = 'g, j, d, a, c, i';
+          document.getElementById('subgraph-vertices').value = vStr;
+          applySubgraphFilter(vStr);
+        } else if (preset === 'e') {
+          const vStr = 'c, h, g, i, j';
+          document.getElementById('subgraph-vertices').value = vStr;
+          applySubgraphFilter(vStr);
+        } else if (preset === 'f') {
+          // vertex set {e, f, b, c, h, j} without edge bc
+          const vStr = 'e, f, b, c, h, j';
+          document.getElementById('subgraph-vertices').value = vStr;
+          applySubgraphFilter(vStr);
+
+          // Find edge {b, c} and mark as omitted
+          const bNode = state.nodes.find(n => n.label === 'b');
+          const cNode = state.nodes.find(n => n.label === 'c');
+          if (bNode && cNode) {
+            const bcEdge = state.edges.find(e => (e.u === bNode.id && e.v === cNode.id) || (e.u === cNode.id && e.v === bNode.id));
+            if (bcEdge) state.subgraphOmitEdges.add(bcEdge.id);
+          }
+        } else if (preset === 'g') {
+          // spanning subgraph with exactly 10 edges
+          document.getElementById('subgraph-vertices').value = '';
+          applySubgraphFilter('');
+          // keep only first 10 edges
+          state.subgraphOmitEdges.clear();
+          if (state.edges.length > 10) {
+            state.edges.slice(10).forEach(ed => state.subgraphOmitEdges.add(ed.id));
+          }
+        }
+
+        modal.classList.add('hidden');
+        render();
+      });
+    });
+
+    // Clear Canvas
+    document.getElementById('btn-clear-all').addEventListener('click', () => {
+      state.nodes = [];
+      state.edges = [];
+      state.bgImage = null;
+      state.selectedNodeId = null;
+      state.selectedEdgeId = null;
+      state.subgraphFilter = null;
+      state.subgraphOmitEdges.clear();
+      document.getElementById('subgraph-vertices').value = '';
+      updateInspector();
+      render();
+      showToast('Canvas cleared');
+    });
+
+    // TikZ LaTeX Code Generation
+    function updateCode() {
+      const scale = parseFloat(document.getElementById('tikz-scale').value) || 0.9;
+      state.scale = scale;
+      state.invertY = document.getElementById('chk-auto-flip-y').checked;
+      const isStandalone = document.getElementById('chk-standalone').checked;
+
+      const activeNodes = getActiveNodes();
+      const activeNodeIds = new Set(activeNodes.map(n => n.id));
+      const activeEdges = getActiveEdges(activeNodeIds);
+
+      // Build LaTeX code
+      let lines = [];
+
+      if (isStandalone) {
+        lines.push('\\documentclass[tikz,border=3mm]{standalone}');
+        lines.push('\\usepackage{tikz}');
+        lines.push('');
+        lines.push('\\begin{document}');
+      }
+
+      lines.push(`\\begin{tikzpicture}[scale=${scale.toFixed(1)},`);
+      lines.push('  vertex/.style={circle, draw=black, thick, fill=white, inner sep=0pt, minimum size=6mm, font=\\small\\bfseries},');
+      lines.push('  edge/.style={draw=black, thick}');
+      lines.push(']');
+      lines.push('');
+      lines.push('  % Vertices');
+
+      activeNodes.forEach(node => {
+        const norm = getNormalizedCoords(node);
+        lines.push(`  \\node[vertex] (${node.label}) at (${norm.x}, ${norm.y}) {${node.label}};`);
+      });
+
+      lines.push('');
+      lines.push('  % Edges');
+      activeEdges.forEach(edge => {
+        const u = state.nodes.find(n => n.id === edge.u);
+        const v = state.nodes.find(n => n.id === edge.v);
+        if (u && v) {
+          lines.push(`  \\draw[edge] (${u.label}) -- (${v.label});`);
+        }
+      });
+
+      lines.push('\\end{tikzpicture}');
+
+      if (isStandalone) {
+        lines.push('\\end{document}');
+      }
+
+      document.getElementById('tikz-output').value = lines.join('\n');
+    }
+
+    function updateCounter() {
+      const activeNodes = getActiveNodes();
+      const activeNodeIds = new Set(activeNodes.map(n => n.id));
+      const activeEdges = getActiveEdges(activeNodeIds);
+      document.getElementById('node-edge-counter').innerText = 
+        `${activeNodes.length} vertices, ${activeEdges.length} edges`;
+    }
+
+    // Input listeners for export options
+    ['tikz-scale', 'tikz-width-span', 'chk-auto-flip-y', 'chk-standalone'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        render();
+      });
+    });
+
+    // Copy to clipboard
+    document.getElementById('btn-copy-code').addEventListener('click', () => {
+      const output = document.getElementById('tikz-output');
+      output.select();
+      document.execCommand('copy');
+      showToast('LaTeX TikZ copied to clipboard!');
+    });
+
+    // Toast notification
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2200);
+    }
+
+    // Initialize application on window load
+    window.onload = function() {
+      resizeCanvas();
+      loadFigure1Sample();
+      setTool('select');
+    };
+  </script>
+</body>
+</html>
