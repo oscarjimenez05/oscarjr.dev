@@ -3,137 +3,67 @@ layout: '../../layouts/Project.astro'
 title: NAS Homelab
 description: "Containerized media stack, automated backup pipelines, and secure reverse-proxy routing."
 badge: "Self-Hosted"
-tags: ["Docker", "Tailscale", "Caddy"]
+tags: ["Docker", "Tailscale", "Cloudflare"]
 ---
 
 ## The Core Philosophy
+I was running out of storage, so I bought an 8tb Hard Drive that I told myself I would back up all of my files to on a weekly basis. That exercise lasted less than two weeks, so I needed a more long-term solution.
 
-At some point, paying recurring subscription fees to let third-party tech conglomerates compress family vacation photos and train models on text documents becomes philosophically irritating. 
+Since I don't like recurring fees the next best alternative was to pay an order of magnitude more upfront for dedicated hardware, work around campus network restrictions, and assume full operational liability for personal and family uptime. 
 
-The rational human response is to pay an order of magnitude more upfront for dedicated hardware, configure network routing tables until 3:00 AM, and assume full operational liability for personal uptime. 
-
-This project chronicles the migration from "the cloud is just someone else's computer" to "someone else's computer is now drawing 45 watts next to my desk."
+This is how this all worked out, and what important skills I learned from this project. I will try my best to be descriptive without revealing details that will get me hacked.
 
 ---
 
 ## The Hardware Rig
+The foundation is built on a **UGREEN NAS enclosure** (*DXP4800 Pro*) running **UGOS Pro** (Debian-based OS). This little toaster is running two separate RAID 1 HDD volumes, plus two NVMes for the operating system and container data. 
 
-The foundation is built on a **UGREEN NAS enclosure** (*DXP4800 Pro*) running **UGOS Pro**. It does not look like an enterprise rack unit ready to cool down a server room; it looks like a polite aluminum toaster that quietly handles several terabytes of mirrored solid-state and mechanical storage.
+Normally, one would be able to connect to this through the NAS's static IP address if on the same Local Area Network. It was devastating to find out that for security purposes, the Residential Network of Ithaca College does not allow this direct communication. So there's a stack of solutions in place:
 
+### UGREENLink
+A relay connection through UGREEN's servers, so really slow and not useful for any bandwidth-heavy or latency-sensitive task. Additionally, can only practically access the raw **UGOS Pro** through it, services on specific ports become unaccessible. Also exposed to public internet, so required strong rotating passwords and 2FA authentication. This is still up but only for when the methods below fail (most commonly when a credential expires).
 
+### Tailscale
+Mesh VPN connection that allows for P2P communication between end hosts and NAS, even through restrictive college network. When that direct connection fails still resorts to Tailscale's relay servers, but they are still faster than UGREEN's. Plus I have managed to get direct connections even across international borders. Truly life-saving technology.
 
-```
-              ┌─────────────────────────────────────────┐
-              │             UGREEN NAS Unit             │
-              │             (OS: UGOS Pro)              │
-              └────────────────────┬────────────────────┘
-                                   │
-            ┌──────────────────────┴──────────────────────┐
-            ▼                                             ▼
- [ Tailscale WireGuard ]                       [ Caddy Reverse Proxy ]
-            │                                             │
-┌───────────┴────────────┐                  ┌────────────┴─────────────┐
-▼                         ▼                  ▼                           ▼
-Immich (Photos)      Nextcloud (Files)   Directus (Databases)       Beszel / Dozzle
-
-```
+### Cloudflare Tunnel
+*Most* public services pass through this tunnel network.
 
 ---
 
-## The Software Stack & Services
+## Services
+UGOS Pro handles the underlying storage pools, but the actual work runs inside containerized environments managed via Docker Compose.
 
-UGOS Pro handles the underlying storage pools, but the actual work runs inside containerized environments managed via Docker Compose. 
+### Public Services
+- Small photo sharing container using FileBrowser Quantum.
+- Song review system using the freeframe.io software.
+- Self-hosted Overleaf instance for collaboration after running out of free plan compile limits for [this research project](/projects/lehmerprng) on the cloud version.
 
-### 1. Photo Preservation: Immich
-Google Photos is convenient until storage thresholds trigger passive-aggressive storage upgrade banners. 
+#### Media Library
 
-* **The Replacement:** A self-hosted [Immich](https://immich.app/) instance.
-* **The Reality:** Handles machine-learning facial recognition, geospatial mapping, and automated background sync from mobile devices without sending raw telemetry to Mountain View. 
-* **The User Base:** Successfully onboarded immediate family members. If the photos stop syncing during Thanksgiving, I am the tier-1 support engineer.
+One additional public service is my personal Jellyfin media collection. Because Cloudflare Tunnel's terms of service explicitly prohibit heavy media streaming, I had to look for an alternative solution. So I booted up a disposable Oracle Cloud virtual machine that is connected to the same *tailscale* network as the NAS. So clients talk to this public machine outside Ithaca College restrictions which then relays to my NAS through *tailscale*.
 
-### 2. File Systems & Data Governance: Nextcloud
-* Handles cross-device file synchronization, calendar sync, and general cloud utility replacement.
-* Paired with offsite snapshotting because RAID is a high-availability measure, not a backup strategy. If you do not test your restores, you do not have backups; you have hope.
+However, because this VM has to be set to DNS only in the Cloudflare dashboard, I do not have built-in DDoS protection, so I had to install fail2ban in it. Additionally, had to set permissions so it can only talk to the NAS in the *tailscale* mesh, and only on the specific port for Jellyfin. This is to prevent some sort of mesh-wide attack in case there was a vulnerability in Caddy that allowed to make arbitrary requests to anything else.
 
-### 3. Structured Data: Directus
-* Serves as a headless CMS and structured database wrapper.
-* Currently stores cataloged schemas, asset metadata, and custom inventories (including personal collections and physical item tracking) via an intuitive REST/GraphQL layer.
+### Private Services
+#### Photo Library
+Google Photos is convenient until storage thresholds trigger passive-aggressive storage upgrade banners. Or when they increase their prices, or shut down features without warning, or when they add gen-AI bloat where it doesn't make sense, or when they use your sensitive photos to train said gen-AI bloat.
 
-### 4. Telemetry & Observability
-Because running headless software without metrics is just waiting for a disk to silently fill up until a process crashes:
-* **Beszel:** Lightweight, no-nonsense server telemetry tracking CPU spikes, RAM allocation, and ambient temperature.
-* **Dozzle:** Real-time container log viewer. Far superior to running `docker logs -f --tail 100 <container_id>` inside an SSH session on a phone.
+- **The Replacement:** A self-hosted [Immich](https://immich.app/) instance.
+- **The Reality:** Handles machine-learning facial recognition, geospatial mapping, and automated background sync from mobile devices without sending raw telemetry to Mountain View. 
+- **The User Base:** Successfully onboarded immediate family members. If the photos stop syncing during Thanksgiving, I am the tier-1 support engineer.
 
----
+> Currently working on a database project that pulls instance data and augments it to get deeper photo insights. Coming soon on the [projects](/projects) page.
 
-## Networking: How to Not Expose Everything to the Internet
+#### File System
+- Nextcloud cross-device file synchronization, calendar sync, and general cloud utility replacement.
+- Paired with offsite snapshotting because RAID is a high-availability measure, not a backup strategy. If you do not test your restores, you do not have backups; you have hope.
 
-Opening ports on a residential ISP router is a time-tested strategy for learning how fast botnets scan IPv4 subnets. We do not do that here.
+#### Database
+- Using Directus as a headless CMS and structured database wrapper.
+- Currently stores cataloged schemas, asset metadata, and custom inventories (including personal mineral collections and physical item tracking) via an intuitive REST/GraphQL layer. Will integrate to this website soon!
 
-
-```
-Client Device (Phone / Laptop)
-│
-▼
-[ Tailscale Mesh VPN ]
-│  (Encrypted WireGuard Tunnel)
-▼
-[ Caddy Reverse Proxy ] ───► SSL Termination (Internal certs)
-│
-├──► immich.internal:2283
-├──► cloud.internal:8080
-└──► dozzle.internal:8888
-```
-
-1. **Tailscale:** Every device (laptops, phones, remote clients) communicates over an encrypted WireGuard mesh network. To the outside world, zero ports are open to the open internet.
-2. **Caddy:** Operates as the internal reverse proxy. Handles internal routing, SSL termination, and readable local domain aliases (`*.internal`) so nobody has to remember random 5-digit port numbers.
-3. **Cloudflare Tunnels:** Reserved strictly for external endpoints that need authenticated zero-trust handshakes without poking holes in the firewall.
-
----
-
-## Continuous Deployment via GitHub Actions
-
-Updating the static frontend portfolio (built on Astro) does not involve dragging files over SFTP like it is 2004.
-
-```yaml
-name: Deploy to Self-Hosted NAS
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-
-      - name: Connect to Mesh
-        uses: tailscale/github-action@v2
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-
-      - name: Build & Rsync Static Payload
-        run: |
-          npm ci
-          npm run build
-          rsync -avz --delete ./dist/ deploy@nas.internal:/var/www/osquijrdev/
-```
-
-Every `git push` to `main` spins up an ephemeral runner, authenticates onto the private Tailscale tailnet using an ephemeral auth key, compiles the Astro production bundle, and rsyncs the build artifact directly into the web root on the NAS.
-
-If a build fails, it fails in GitHub's container, not in production.
-
----
-
-## Retrospective & Current State
-
-| Metric | Status |
-| --- | --- |
-| **Monthly Subscription Fees Eliminated** | ~$25/month |
-| **Hardware Payback Period** | Somewhere around late 2029 |
-| **Silent Fault Tolerance** | High (Mirrored arrays + automated snapshots) |
-| **Peace of Mind** | 100% data ownership, 0% dependency on third-party cloud policies |
-
-The infrastructure now quietly hums along, backing up files, tracking metrics, and hosting this website. It turns out that when you build things correctly the first time, you don't actually have to spend every weekend fixing them.
-
+#### Monitoring
+Running a couple of useful monitoring tools as well.
+- **[Beszel](https://beszel.dev/):** Lightweight, no-nonsense server telemetry tracking CPU spikes, RAM allocation, and ambient temperature, and ICMP network monitors. Webhook connected to alerts on my phone.
+- **[Dozzle](https://dozzle.dev):** Real-time container log viewer. Far superior to running `docker logs -f --tail 100 <container_id>` inside an SSH session on a phone everytime something goes wrong.
