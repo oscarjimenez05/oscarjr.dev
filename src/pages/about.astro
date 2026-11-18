@@ -4,10 +4,55 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="about me | osquijr.dev"
         themeClass="bg-zinc-100 text-zinc-950 font-comic">
+    <section class="max-w-3xl mx-auto py-16 px-6 space-y-8">
+        <div>
+            <h1 class="text-5xl font-bold tracking-tight mb-2">
+                about <span class="text-blue-500">oscar</span><span class="text-emerald-500">Jimenez</span>:
+            </h1>
+            <p class="text-sm font-mono text-zinc-500">
+                // computer science, mathematics, music & film
+            </p>
+        </div>
 
-        <h1 class="text-5xl font-bold tracking-tight mb-4">about <span class="text-blue-400">oscar</span><span class="text-emerald-400">Jimenez</span>:</h1>
-        <br><br>
-        <p class="text-xl font-medium">
-            Born and raised in Ensenada, Mexico, I knew
-        </p>
+        <div class="space-y-5 text-lg leading-relaxed text-zinc-800">
+            <p>
+                I'm a Computer Science and Mathematics student at <strong class="text-zinc-950">Ithaca College</strong> who also spends a lot of time working across <span class="text-purple-600 font-semibold">music production and film</span>. Whether I'm writing low-level systems code, analyzing statistical randomness, or scoring a scene, I like building things from first principles.
+            </p>
+
+            <p>
+                On the technical side, my work sits at the intersection of backend architecture, local AI systems, and applied mathematics. I have conducted undergraduate research on <span class="text-blue-600 font-semibold">empirically testing pseudo-random number generators</span> (TestU01, Lehmer codes, and LCGs) and engineered <span class="text-emerald-600 font-semibold">multi-agent local Small Language Model pipelines</span> in Java and Spring Boot. Research I authored and presented at <strong class="text-zinc-950">ACM SIGCSE 2026</strong>.
+            </p>
+
+            <p>
+                Outside of coursework and research, I self-host my own cloud infrastructure and media stack on a home NAS using Docker, Tailscale, and Caddy, make my own synth patches on Pigments, and shoot and edit film projects in DaVinci Resolve and Premiere Pro.
+            </p>
+        </div>
+
+        <div class="pt-6 border-t border-zinc-300 grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+            <div>
+                <h2 class="font-bold uppercase tracking-wider text-zinc-500 mb-2">Currently Into</h2>
+                <ul class="space-y-1.5 text-zinc-800">
+                    <li>→ Local LLM inference & verification loops</li>
+                    <li>→ Self-hosted homelab infrastructure</li>
+                    <li>→ Combinatorics & ethnomathematics</li>
+                    <li>→ Scoring & editing setups</li>
+                </ul>
+            </div>
+
+            <div>
+                <h2 class="font-bold uppercase tracking-wider text-zinc-500 mb-2">Elsewhere</h2>
+                <ul class="space-y-1.5 font-mono">
+                    <li>
+                        <a href="/projects" class="text-blue-600 hover:underline">./projects</a> — research & builds
+                    </li>
+                    <li>
+                        <a href="/art" class="text-purple-600 hover:underline">./art</a> — film & audio work
+                    </li>
+                    <li>
+                        <a href="https://github.com/oscarjimenez05" target="_blank" rel="noopener noreferrer" class="text-emerald-600 hover:underline">github.com/oscarjimenez05</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
 </Layout>
