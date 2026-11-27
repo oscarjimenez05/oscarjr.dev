@@ -8,6 +8,10 @@ badge: "Research"
 tags: ["Spring Boot", "Java", "Ollama / SLMs", "ACM SIGCSE"]
 ---
 
+## Publication
+
+O. Jimenez Rodriguez. "Generating Contextual Programming Exercises via Large Language Models and Microservice Architectures." In *Proceedings of the 57th ACM Technical Symposium on Computer Science Education (SIGCSE 2026)*, St. Louis, MO, 2026. [doi:10.1145/3770761.3777153](https://doi.org/10.1145/3770761.3777153).
+
 ## The Core Problem
 Introductory Computer Science courses burn through a lot of practice problems. Writing fresh coding exercises, edge-case unit tests, and tailored feedback for every topic takes hours of faculty labor. 
 
