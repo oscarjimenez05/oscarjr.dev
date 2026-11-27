@@ -8,6 +8,10 @@ priority: 10
 date: 2026-10-19
 ---
 
+## Publication
+
+O. Jimenez Rodriguez. "Using Lehmer Codes to Generate Uniform Pseudo-Random Number Sequences." Preprint, 2026. [doi:10.5281/zenodo.24549563](https://doi.org/10.5281/zenodo.24549563).
+
 ## The Core Problem
 Pseudo-Random Number Generators (PRNGs) generally fall into one of two categories: blazingly fast algorithms that are statistically terrible (like Linear Congruential Generators or basic Xorshifts), and cryptographically secure generators (CSPRNGs) that rely on hardware entropy and system calls, making them far too slow for massive simulations.
 
